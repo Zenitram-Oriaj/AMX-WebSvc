@@ -2,7 +2,7 @@ program_name = 'res'
 (***********************************************************)
 (*  FILE CREATED ON: 02/12/2015  AT: 14:31:51              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 23:22:15        *)
+(*  FILE_LAST_MODIFIED_ON: 02/17/2015  AT: 11:02:16        *)
 (***********************************************************)
 
 define_constant
@@ -45,27 +45,25 @@ char mimeTyp[][32] = {
 	'image/ico'	      	   			// 13 - 
 }                           
 
-define_function char[S04K] read(char A[]){
-	stack_var slong 	fhd;   																			// stores the tag that represents the file (or and error code)
-	local_var slong 	rsl;       																	// stores the number of bytes read (or an error code)
-	stack_var char  	lne[512];    																// a buffer for reading one line.  Must be as big or bigger than the biggest line
+define_function char[S16K] read(char A[]){
+	stack_var slong 	fhd;
+	local_var slong 	rsl;
 	stack_var integer inc;
 	stack_var char 		fle[128];
-	stack_var char 		res[S04K];
+	stack_var char 		res[S16K];
 
-	fle = "'www/',A";
+	fle = "svc.root,A";
 	
-	fhd = file_open(fle,FILE_READ_ONLY) 													// OPEN FILE FROM THE BEGINNING
-	if(fhd > 0) {               																	// A POSITIVE NUMBER IS RETURNED IF SUCCESSFUL
-		rsl = 1;              																			// seed with a good number so the loop runs at least once
-		while(rsl > 0) {
-			rsl = file_read_line(fhd, lne, max_length_string(lne)); 	// grab one line
-			res = "res,lne";
-		}
+	fhd = file_open(fle,FILE_READ_ONLY);
+	if(fhd > 0) {
+		rsl = 1;
+		rsl = file_read(fhd, res, S16K);
 		file_close(fhd);
+		print(dbgDAT,"'FILE OPEN SUCCESS: Size = ',itoa(length_string(res))");
 	}           
 	else {
-		print(dbgERR,"'FILE OPEN ERROR:',itoa(fhd)");  										// IF THE LOG FILE COULD NOT BE CREATED
+		print(dbgERR,"'FILE OPEN ERROR:',itoa(fhd)");
+		res = "'<body><h1>ERROR OPENING FILE</h1></body>'";
 	}
 	
 	return res;
@@ -88,7 +86,7 @@ define_function char[S01K] json(char A[]){
 	
 	/////////////////////////////////////////////////////////
 	
-	str = "str,'"chns":"',$0A";
+	str = "str,'"chns":"'";
 	for(i = 1; i <= 8; i++){
 		str = "str,itoa(svc.chns[i])";
 		if(i < 8) {
@@ -99,7 +97,7 @@ define_function char[S01K] json(char A[]){
 	
 	/////////////////////////////////////////////////////////
 	
-	str = "str,'"lvls":"',$0A";
+	str = "str,'"lvls":"'";
 	for(i = 1; i <= 8; i++){
 		str = "str,itoa(svc.lvls[i])";
 		if(i < 8) {
@@ -115,9 +113,16 @@ define_function char[S01K] json(char A[]){
 	return str;
 }
 
-define_function char[S02K] headers(integer CD, integer CT, integer CL){
+define_function char[S02K] headers(integer A, integer B, integer C){
 	stack_var char header[S02K];
 	stack_var char mime[64];
+	stack_var integer CD;
+	stack_var integer CT;
+	stack_var integer CL;
+	
+	CD = A;
+	CT = B;
+	CL = C;
 	
 	header = "'HTTP/1.1 ',htmlCode[CD],$0D,$0A";
 	header = "header,'Server: Netlinx Web Service',$0D,$0A";
@@ -132,50 +137,21 @@ define_function char[S02K] headers(integer CD, integer CT, integer CL){
 	return header;
 }
 
-define_function char[S08K] homePage(){
-	
+define_function char[S16K] resIndex(){
 	stack_var char header[S04K];
-	stack_var char str[S04K];
-	stack_var char file[S06K];
+	stack_var char html[S16K];
 	
-	str = "'<!DOCTYPE html>',$0A"
-	str =	"str,'<html ng-app = "app">',$0A"
-	str =	"str,'<head>',$0A";
+	html = read('index.html');
 	
-	str =	"str,'<meta charset = "utf-8">',$0A";
-	str =	"str,'<meta name = "viewport" content = "initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">',$0A";
-	str =	"str,'<meta name = "apple-mobile-web-app-capable" content = "yes">',$0A";
-	str =	"str,'<meta name = "apple-mobile-web-app-status-bar-style" content = "default">',$0A";
-	
-	str =	"str,'<title>',svc.title,'</title>',$0A";
-	
-	str =	"str,'<link rel = "stylesheet" href = "http://',svc.ip,'/www/css/bootstrap.min.css">',$0A";
-	str =	"str,'<link rel = "stylesheet" href = "http://',svc.ip,'/www/css/app.css">',$0A";
-	
-	str =	"str,'<script src = "http://',svc.ip,'/www/js/jquery.min.js"></script>',$0A";
-	str =	"str,'<script src = "http://',svc.ip,'/www/js/bootstrap.min.js"></script>',$0A";
-	str =	"str,'<script src = "http://',svc.ip,'/www/js/angular.min.js"></script>',$0A";
-	str =	"str,'<script src = "http://',svc.ip,'/www/js/app.js"></script>',$0A";
-	str =	"str,'</head>',$0A";
-	
-	str =	"str,'<body ng-controller="AppCtrl">',$0A";
-	str =	"str,'<div class="container">',$0A";
-	
-	str =	"str,'<ng-include src="',$27,'control.html',$27,'"></ng-include>'";
-	
-	str =	"str,'</div>',$0A";
-	str =	"str,'</body>',$0A";
-	str =	"str,'</html>',$0A";
-	
-	header = headers(1,1,length_string(str));
-	return "header,str";
+	header = headers(1,1,length_string(html));
+	return "header,html";
 }
 
-define_function char[S08K] resDefault() {
+define_function char[S16K] resDefault() {
 	stack_var char header[S04K];
-	stack_var char str[S04K];
+	stack_var char str[S16K];
 
-	str = "'{"cmd":"echo","val": 100}',$0D,$0A";
+	str = json('OK');
 	header = headers(1,11,length_string(str));
 	
 	return "header,str";
@@ -183,7 +159,7 @@ define_function char[S08K] resDefault() {
 
 define_function char[S16K] resFile(char A[]) {
 	stack_var char header[S02K];
-	stack_var char str[S14K];
+	stack_var char str[S16K];
 	stack_var char ext[8];
 	stack_var char file[32];
 	stack_var integer i;
@@ -215,7 +191,7 @@ define_function char[S08K] resSuccess() {
 	stack_var char header[S02K];
 	stack_var char str[S06K];
 
-	str = json('Test Message');
+	str = json('OK');
 	header = headers(1,11,length_string(str));
 	
 	return "header,str";
@@ -229,7 +205,7 @@ define_function char[S08K] resFailed(char A[]) {
 
 	rsl = A;
 
-	str = "'{"cmd":"',req.cmd,'","val": "',req.val,'", "result": "',rsl,'"}',$0D,$0A";
+	str = json('ERROR');
 	header = headers(3,11,length_string(str));
 	
 	return "header,str";

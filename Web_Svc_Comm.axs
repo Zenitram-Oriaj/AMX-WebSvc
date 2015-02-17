@@ -6,7 +6,7 @@ module_name = 'Web_Svc_Comm' (
 (***********************************************************)
 (*  FILE CREATED ON: 02/12/2015  AT: 12:21:46              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 23:24:10        *)
+(*  FILE_LAST_MODIFIED_ON: 02/17/2015  AT: 14:30:04        *)
 (***********************************************************)
 #define devices 1
 
@@ -21,6 +21,7 @@ vdvWEB	= 33001:01:000;
 
 define_constant
 
+integer MAX_CHANS = 30;
 char null[] = '';
 
 long FILEBUFF = 131072;			//128K is the maximum file S
@@ -48,12 +49,17 @@ define_type
 
 struct _svc {
 	char name[32];						// Web Service Name
+	char host[32];						// Server Host Name
 	char title[32];						// Web Service (Page) Title
-	char ip[16];							// Local IP Address Of AMX
+	char root[16];						// Web Content Root Directory
+	
+	char ip[16];							// Local IP Address
+	char sb[16];							// Local IP Subnet
+	char gw[16];							// Local IP Gateway
 	integer port;							// Web Service Port
 	
 	integer lvls[8];					// Stored Levels
-	integer chns[8];					// Shored Channels (1 - 8);
+	integer chns[30];					// Shored Channels (1 - 10);
 }
 
 struct _req {
@@ -63,6 +69,7 @@ struct _req {
 	
 	char cmd[16];
 	char val[16];
+	char chn[8];
 }
 
 define_variable
@@ -70,18 +77,29 @@ define_variable
 volatile _svc svc;
 volatile _req req;
 
-volatile integer dbg = 0;
+volatile integer dbg = dbgALL;
 
 define_function init() {
+	stack_var ip_address_struct amx;
 	stack_var integer i;
+	stack_var sinteger r;
+	
+	r = get_ip_address(0,amx);
 	
 	svc.title = 'Web Service';
-	svc.ip = '172.16.76.31';
+	svc.host = amx.HOSTNAME;
+	svc.ip = amx.IPADDRESS;
+	svc.sb = amx.SUBNETMASK;
+	svc.gw = amx.GATEWAY;
 	svc.port = 8080;
 	svc.name = 'WEB';
+	svc.root = 'www/'
 	
 	for(i = 1; i <= 8; i++){
 		svc.lvls[i] = 0;
+	}
+	
+	for(i = 1; i <= 30; i++){
 		svc.chns[i] = 0;
 	}
 	
@@ -99,6 +117,7 @@ define_function clearReq(){
 	req.file = null;
 	req.cmd  = null;
 	req.val  = null;
+	req.chn  = null;
 }
 
 define_function print(integer A, char B[]) {
@@ -134,7 +153,7 @@ define_function print(integer A, char B[]) {
 				send_string 0,"'>> ',svc.name,' :: ',tstr";
 			}
 			
-			send_string 0,"'>> ',svc.name,' :: ',str";
+			send_string 0,"'>> ',svc.name,' :: CNT :: ',str";
 		}
 	}
 }
@@ -157,31 +176,49 @@ define_function parse(char A[]) {
 	switch(cmd) {
 		case 'NAME': 		svc.name = str;
 		case 'TITLE': 	svc.title = str;
-		case 'IP': 			svc.ip = str;
+		case 'ROOT': 		svc.root = "str,'/'";
 		case 'PORT': 		svc.port = atoi(str);
 		case 'REINIT': 	init();
 		case 'DEBUG':{
 			dbg = atoi(str);
 			print(dbg,"'Setting Debug To ',itoa(dbg)");
 		}
+		case 'LEVEL': {
+			stack_var integer i;
+			i = atoi(remove_string(str,':',1));
+			svc.lvls[i] = atoi(str);
+		}
 		default:{}
 	}
 }
 
-define_function exec(char A[], char B[]){
+define_function exec(char A[], char B[], char C[]){
 	stack_var char cmd[16];
 	stack_var char val[16];
+	stack_var char chn[8];
 	
 	cmd = A;
 	val = B;
+	chn = C;
 	
 	switch(cmd){
-		case 'btn': do_push(vdvWEB,atoi(val));
-		case 'lvl': send_level vdvWEB,1,atoi(val);
+		case 'btn': do_push(vdvWEB,atoi(chn));
+		case 'lvl': {
+			send_level vdvWEB,1,atoi(val);
+			svc.lvls[1] = atoi(val);
+		}
 		case 'str': send_string vdvWEB,val;
 		case 'chn': {
-			[vdvWEB,atoi(val)] = ![vdvWEB,atoi(val)];
-			svc.chns[type_cast(itoa(val))] = !svc.chns[type_cast(itoa(val))];
+			stack_var integer i;
+			stack_var integer n;
+			
+			i = atoi(val);
+			n = atoi(chn);
+			
+			if(chn <= MAX_CHANS){
+				[vdvWEB,n] = i;
+				svc.chns[n] = i;
+			}
 		}
 	}
 }
@@ -253,8 +290,7 @@ data_event[dvWEB]{
 		
 		ip_server_close(dvWEB.Port);
 		clearReq();
-		
-		wait 1 're-run'{
+		wait 1 'reset'{
 			run();
 		}
 	}

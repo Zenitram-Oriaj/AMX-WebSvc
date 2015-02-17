@@ -1,0 +1,95 @@
+<div ui-content-for = "title">
+	<span>Dialer</span>
+</div>
+
+<div class = "scrollable">
+	<div class = "scrollable-content">
+		<div class = "panel panel-info">
+			<div class = "panel-heading">
+				<h3 class = "panel-title">{{dialTitle}}</h3>
+			</div>
+			<div class = "panel-body">
+				
+				<div class = "row">
+					<div class = "col-lg-6">
+						<div class = "input-group">
+      				<span class = "input-group-btn">
+       				 <button class = "btn btn-info" type = "button" ng-click="clr()">CLEAR</button>
+      				</span>
+							<input type = "text" class = "form-control" ng-model="keypad"/>
+						</div>
+					</div>
+				</div>
+
+				<div class = "btn-group btn-group-justified" role = "group" aria-label = "...">
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(1)">1</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(2)">2</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(3)">3</button>
+					</div>
+				</div>
+
+				<div class = "btn-group btn-group-justified" role = "group" aria-label = "...">
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(4)">4</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(5)">5</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(6)">6</button>
+					</div>
+				</div>
+
+				<div class = "btn-group btn-group-justified" role = "group" aria-label = "...">
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(7)">7</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(8)">8</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(9)">9</button>
+					</div>
+				</div>
+
+				<div class = "btn-group btn-group-justified" role = "group" aria-label = "...">
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn('A')">#</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn(0)">0</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="btn('B')">*</button>
+					</div>
+				</div>
+				<p></p>
+				<button class = "btn btn-block btn-success" ng-click = "dial()">DIAL</button>
+				<button class = "btn btn-block btn-danger" ng-click = "hangup()">HANG-UP</button>
+				<hr/>
+				<div class = "progress">
+					<div class = "progress-bar progress-bar-info progress-bar-striped" role = "progressbar"
+							 aria-valuenow = "{{level}}" aria-valuemin = "0" aria-valuemax = "100" style = "width: {{level}}%">
+					</div>
+				</div>
+				
+				<div class = "btn-group btn-group-justified" role = "group" aria-label = "...">
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="volCtrl('D')">Vol Dn</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-{{muteState}}" ng-click="volCtrl('M')">Mute</button>
+					</div>
+					<div class = "btn-group" role = "group">
+						<button type = "button" class = "btn btn-default" ng-click="volCtrl('U')">Vol Up</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -2,7 +2,7 @@ program_name = 'req'
 (***********************************************************)
 (*  FILE CREATED ON: 02/13/2015  AT: 18:01:23              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 18:08:30        *)
+(*  FILE_LAST_MODIFIED_ON: 02/17/2015  AT: 13:33:34        *)
 (***********************************************************)
 
 define_function parameters(char A[]){
@@ -21,6 +21,9 @@ define_function parameters(char A[]){
 		}
 		case 'val':{
 			req.val = str;
+		}
+		case 'chn':{
+			req.chn = str;
 		}
 		default: {
 			print(dbgWRN,"'UNKNOWN PARAMETER TYPE --> ', prm");
@@ -44,16 +47,21 @@ define_function char[S16K] api(char A[]){
 	
 	parameters(str);
 	
-	print(dbgALL,"'Execute --> cmd = ',req.cmd,' :: val = ', req.val");
+	print(dbgALL,"'Execute --> cmd = ',req.cmd,' :: val = ', req.val, ' :: chn = ', req.chn");
 	
-	exec(req.cmd, req.val);
+	exec(req.cmd, req.val, req.chn);
 	
 	res = resSuccess();
 	return res;
 }
 
 define_function char[S16K] sql(char A[]){
-
+	stack_var char res[S16K];
+	stack_var char str[S01k];
+	str = A;
+	
+	res = resSuccess();
+	return res;
 }
 
 define_function char[S16K] get(char A[]){
@@ -130,7 +138,7 @@ define_function char[S16K] request(char A[], char B[]){
 				res = get(val);
 			}
 			else {
-				res = homePage();
+				res = resIndex();
 			}
 			break;
 		}

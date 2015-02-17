@@ -2,7 +2,7 @@ PROGRAM_NAME='Demo - Main'
 (***********************************************************)
 (*  FILE CREATED ON: 02/12/2015  AT: 12:21:06              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 08:20:11        *)
+(*  FILE_LAST_MODIFIED_ON: 02/17/2015  AT: 13:52:20        *)
 (***********************************************************)
 
 define_device
@@ -28,25 +28,54 @@ define_event
 data_event[vdvWEB] {
 	online: {
 		wait 10 'send_params' {
-			send_command vdvWeb,'IP-172.16.76.31';
 			send_command vdvWeb,'PORT-8000';
 			send_command vdvWeb,'REINIT';
+			
+			wait 10 'set_vals'{
+				send_command vdvWeb,'LEVEL-1:55';
+				send_command vdvWeb,'LEVEL-2:95';
+				send_command vdvWeb,'LEVEL-6:25';
+			}
 		}
 	}
 	string: {
-		send_string 0,"'>> vdvWEB String Received -->', data.text";
+		stack_var char str[1024];
+		stack_var char cmd[16];
+		
+		str = data.text;
+		
+		send_string 0,"'>> vdvWEB String Received --> ', str";
+		
+		if(find_string(str,"'-'",1)){
+			cmd = remove_string(str,'-',1);
+			set_length_string(cmd,length_string(cmd) - 1);
+		} else {
+			cmd = str;
+		}
+		
+		cmd = upper_string(cmd);
+		
+		switch(cmd) {
+			case 'DIAL': {
+				send_string 0,"'>> vdvWEB Dialing This Num: ', str";
+			};
+			case 'HANGUP': 		{};
+			case 'POWER ON': 	{};
+			case 'POWER OFF': {};
+			default:{}
+		}
 	}
 }
 
 level_event[vdvWEB,1] {
-	send_string 0,"'>> vdvWEB Level Received -->', itoa(level.value)";
+	send_string 0,"'>> vdvWEB Level Received --> ', itoa(level.value)";
 }
 
 channel_event[vdvWEB,nChns] {
 	on: {
-		send_string 0,"'>> vdvWEB Channel On  -->', itoa(channel.channel)";
+		send_string 0,"'>> vdvWEB Channel On  --> ', itoa(channel.channel)";
 	}
 	off: {
-		send_string 0,"'>> vdvWEB Channel Off -->', itoa(channel.channel)";
+		send_string 0,"'>> vdvWEB Channel Off --> ', itoa(channel.channel)";
 	}
 }
