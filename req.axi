@@ -2,7 +2,7 @@ program_name = 'req'
 (***********************************************************)
 (*  FILE CREATED ON: 02/13/2015  AT: 18:01:23              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/13/2015  AT: 18:26:36        *)
+(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 18:08:30        *)
 (***********************************************************)
 
 define_function parameters(char A[]){
@@ -23,7 +23,7 @@ define_function parameters(char A[]){
 			req.val = str;
 		}
 		default: {
-			print("'UNKNOWN PARAMETER TYPE --> ', prm");
+			print(dbgWRN,"'UNKNOWN PARAMETER TYPE --> ', prm");
 		}
 	}
 }
@@ -44,7 +44,7 @@ define_function char[S16K] api(char A[]){
 	
 	parameters(str);
 	
-	print("'Execute --> cmd = ',req.cmd,' :: val = ', req.val");
+	print(dbgALL,"'Execute --> cmd = ',req.cmd,' :: val = ', req.val");
 	
 	exec(req.cmd, req.val);
 	
@@ -62,7 +62,7 @@ define_function char[S16K] get(char A[]){
 	
 	str = A;
 	
-	print("'Process --> ', str");
+	print(dbgALL,"'Process --> ', str");
 	
 	if(find_string(str,'?',1)){
 		stack_var char tmp[32];
@@ -96,8 +96,8 @@ define_function char[S16K] post(char A[], char B[]){
 	str = A;
 	bod = B;
 	
-	print("'Process --> ', str");
-	print("'Body    --> ', bod");
+	print(dbgALL,"'Process --> ', str");
+	print(dbgALL,"'Body    --> ', bod");
 
 	res = resDefault();
 	return res;

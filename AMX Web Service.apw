@@ -152,15 +152,6 @@
 <FilePathName>Web_Svc_Comm.axs</FilePathName>
 <Comments></Comments>
 </File>
-<File CompileType="Netlinx" Type="Other"><Identifier>app</Identifier>
-<FilePathName>www\app.js</FilePathName>
-<Comments></Comments>
-<MasterDirectory>\</MasterDirectory>
-</File>
-<File CompileType="Netlinx" Type="Other"><Identifier>index</Identifier>
-<FilePathName>www\index.html</FilePathName>
-<Comments></Comments>
-</File>
 </System>
 </Project>
 </Workspace>

@@ -2,7 +2,7 @@ program_name = 'res'
 (***********************************************************)
 (*  FILE CREATED ON: 02/12/2015  AT: 14:31:51              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/13/2015  AT: 18:31:08        *)
+(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 23:22:15        *)
 (***********************************************************)
 
 define_constant
@@ -65,14 +65,54 @@ define_function char[S04K] read(char A[]){
 		file_close(fhd);
 	}           
 	else {
-		print("'FILE OPEN ERROR:',itoa(fhd)");  										// IF THE LOG FILE COULD NOT BE CREATED
+		print(dbgERR,"'FILE OPEN ERROR:',itoa(fhd)");  										// IF THE LOG FILE COULD NOT BE CREATED
 	}
 	
 	return res;
 }
 
 define_function char[S01K] json(char A[]){
-
+	stack_var char str[S02K];
+	stack_var char msg[64];
+	stack_var integer i;
+	
+	msg = A;
+	
+	str = "str,'{',$0A";
+	
+	/////////////////////////////////////////////////////////
+	
+	str = "str,'"datetime":"',date,'T',time,'.000",',$0A"
+	
+	str = "str,'"msg":"',msg,'",',$0A"
+	
+	/////////////////////////////////////////////////////////
+	
+	str = "str,'"chns":"',$0A";
+	for(i = 1; i <= 8; i++){
+		str = "str,itoa(svc.chns[i])";
+		if(i < 8) {
+			str = "str,','";
+		}
+	}
+	str = "str,'",',$0A";
+	
+	/////////////////////////////////////////////////////////
+	
+	str = "str,'"lvls":"',$0A";
+	for(i = 1; i <= 8; i++){
+		str = "str,itoa(svc.lvls[i])";
+		if(i < 8) {
+			str = "str,','";
+		}
+	}
+	str = "str,'"',$0A";
+	
+	/////////////////////////////////////////////////////////
+	
+	str = "str,'}',$0A";
+	
+	return str;
 }
 
 define_function char[S02K] headers(integer CD, integer CT, integer CL){
@@ -175,7 +215,7 @@ define_function char[S08K] resSuccess() {
 	stack_var char header[S02K];
 	stack_var char str[S06K];
 
-	str = "'{"cmd":"',req.cmd,'","val": "',req.val,'", "result": true}',$0D,$0A";
+	str = json('Test Message');
 	header = headers(1,11,length_string(str));
 	
 	return "header,str";

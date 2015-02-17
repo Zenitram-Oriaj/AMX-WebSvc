@@ -6,7 +6,7 @@ module_name = 'Web_Svc_Comm' (
 (***********************************************************)
 (*  FILE CREATED ON: 02/12/2015  AT: 12:21:46              *)
 (***********************************************************)
-(*  FILE_LAST_MODIFIED_ON: 02/13/2015  AT: 18:37:26        *)
+(*  FILE_LAST_MODIFIED_ON: 02/16/2015  AT: 23:24:10        *)
 (***********************************************************)
 #define devices 1
 
@@ -36,13 +36,24 @@ long S16K = 16384;
 long S32K = 32768;
 long S64K = 65536;
 
+define_constant
+
+integer dbgOFF = 0;
+integer dbgERR = 1;
+integer dbgWRN = 2;
+integer dbgDAT = 3;
+integer dbgALL = 4;
+
 define_type
 
 struct _svc {
+	char name[32];						// Web Service Name
 	char title[32];						// Web Service (Page) Title
 	char ip[16];							// Local IP Address Of AMX
 	integer port;							// Web Service Port
-	char params[8][32];				// Parameters Received From Web Service
+	
+	integer lvls[8];					// Stored Levels
+	integer chns[8];					// Shored Channels (1 - 8);
 }
 
 struct _req {
@@ -59,11 +70,20 @@ define_variable
 volatile _svc svc;
 volatile _req req;
 
-define_function init() {
+volatile integer dbg = 0;
 
+define_function init() {
+	stack_var integer i;
+	
 	svc.title = 'Web Service';
 	svc.ip = '172.16.76.31';
 	svc.port = 8080;
+	svc.name = 'WEB';
+	
+	for(i = 1; i <= 8; i++){
+		svc.lvls[i] = 0;
+		svc.chns[i] = 0;
+	}
 	
 	run();
 }
@@ -81,15 +101,71 @@ define_function clearReq(){
 	req.val  = null;
 }
 
-define_function print(char A[]) {
-	stack_var char str[512];
-	str = A;
-	send_string 0, "'>> ',str";
+define_function print(integer A, char B[]) {
+	stack_var integer lvl;
+	stack_var char str[S01K];
+	
+	lvl = A;
+	str = B;
+
+	if((dbg) && (lvl <= dbg))
+	{
+		switch(lvl)
+		{
+			case dbgERR: str = "'ERR :: ' ,str";
+			case dbgWRN: str = "'WRN :: ' ,str";
+			case dbgDAT: str = "'DAT :: ' ,str";
+			case dbgALL: str = "'INF :: ' ,str";
+		}      
+		
+		if(length_string(str) <= 128)
+		{
+			send_string 0,"'>> ',svc.name,' :: ',str";
+		}
+		else
+		{
+			stack_var tstr[128];
+			
+			tstr = str;
+			
+			while(length_string(str) > 128)
+			{
+				tstr = get_buffer_string(str,128);
+				send_string 0,"'>> ',svc.name,' :: ',tstr";
+			}
+			
+			send_string 0,"'>> ',svc.name,' :: ',str";
+		}
+	}
 }
 
 define_function parse(char A[]) {
-	stack_var char str[512];
+	stack_var char str[96];
+	stack_var char cmd[16];
+	
 	str = A;
+	
+	if(find_string(str,"'-'",1)){
+		cmd = remove_string(str,'-',1);
+		set_length_string(cmd,length_string(cmd) - 1);
+	} else {
+		cmd = str;
+	}
+	
+	cmd = upper_string(cmd);
+	
+	switch(cmd) {
+		case 'NAME': 		svc.name = str;
+		case 'TITLE': 	svc.title = str;
+		case 'IP': 			svc.ip = str;
+		case 'PORT': 		svc.port = atoi(str);
+		case 'REINIT': 	init();
+		case 'DEBUG':{
+			dbg = atoi(str);
+			print(dbg,"'Setting Debug To ',itoa(dbg)");
+		}
+		default:{}
+	}
 }
 
 define_function exec(char A[], char B[]){
@@ -103,6 +179,10 @@ define_function exec(char A[], char B[]){
 		case 'btn': do_push(vdvWEB,atoi(val));
 		case 'lvl': send_level vdvWEB,1,atoi(val);
 		case 'str': send_string vdvWEB,val;
+		case 'chn': {
+			[vdvWEB,atoi(val)] = ![vdvWEB,atoi(val)];
+			svc.chns[type_cast(itoa(val))] = !svc.chns[type_cast(itoa(val))];
+		}
 	}
 }
 
@@ -123,7 +203,7 @@ data_event[dvWEB]{
 		run();
 	}
 	onerror: {
-		print('Server Has An Error')
+		print(dbgERR,'Server Has An Error')
 	}
 	string:  {
 		stack_var char str[S08K];
@@ -147,11 +227,11 @@ data_event[dvWEB]{
 				stack_var tmp[128];
 				tmp = remove_string(hdr,"$0D,$0A",1);
 				set_length_string(tmp, length_string(tmp) - 2);
-				print(tmp);
+				print(dbgDAT,tmp);
 			}
 		}
 		else {
-			print('ERROR - NO HEADERS FOUND. Not Valid Web Request');
+			print(dbgERR,'ERROR - NO HEADERS FOUND. Not Valid Web Request');
 		}
 		
 		res = request(typ,str);
@@ -182,10 +262,12 @@ data_event[dvWEB]{
 
 data_event[vdvWEB]{
 	online: {
-		init();
+		wait 10 send_string vdvWEB,'READY';
 	}
-	command: {
-	
+	command:{
+		stack_var char str[96];
+		str = data.text;
+		parse(str);
 	}
 }
 
